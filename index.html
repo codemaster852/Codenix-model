@@ -25,6 +25,7 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #111827; /* bg-gray-900 */
+            overflow-x: hidden;
         }
         /* Style for the code output block */
         #code-output {
@@ -35,9 +36,8 @@
         /* Style for the preview iframe */
         #preview-frame {
             width: 100%;
-            height: 400px;
+            height: 100%; /* Fill parent */
             border: none;
-            border-radius: 0 0 1rem 1rem; /* rounded-b-2xl */
             background-color: white;
         }
         /* Custom scrollbar for a more integrated look */
@@ -55,82 +55,91 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #6b7280; /* bg-gray-500 */
         }
+        /* Resizer handle styles */
+        .resizer {
+            background-color: #374151; /* bg-gray-700 */
+            cursor: col-resize;
+            flex-shrink: 0;
+            width: 6px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .resizer:hover {
+            background-color: #4f46e5; /* hover:bg-indigo-600 */
+        }
     </style>
 </head>
 <body class="text-gray-200">
 
-    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 flex flex-col h-screen">
         <!-- Header Section -->
-        <header class="text-center mb-8">
+        <header class="text-center mb-4 flex-shrink-0">
             <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 Codenix
             </h1>
             <p class="text-gray-400 mt-2">AI-powered code generation, right in your browser.</p>
         </header>
 
-        <!-- Main Content: Input and Controls -->
-        <main class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700">
-            <!-- Prompt Input Textarea -->
-            <div class="mb-4">
-                <label for="prompt-input" class="block mb-2 text-sm font-medium text-gray-300">Your Prompt</label>
-                <textarea id="prompt-input" rows="4" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" placeholder="e.g., Create a Python function to reverse a string... or... Design a simple HTML login form"></textarea>
+        <!-- Main Layout Container -->
+        <div id="main-layout" class="w-full flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+            
+            <!-- Input Column -->
+            <div id="input-column" class="flex flex-col lg:flex-[0_0_30%] min-w-0">
+                <main class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col">
+                    <div class="mb-4">
+                        <label for="prompt-input" class="block mb-2 text-sm font-medium text-gray-300">Your Prompt</label>
+                        <textarea id="prompt-input" rows="8" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 flex-1 resize-none" placeholder="e.g., Create a Python function to reverse a string... or... Design a simple HTML login form"></textarea>
+                    </div>
+                    <div class="flex items-center">
+                        <button id="generate-btn" class="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed">
+                            <svg id="generate-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-sparkles"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L11.8 9.2a1.21 1.21 0 0 0 0 1.72l5.8 5.8a1.21 1.21 0 0 0 1.72 0l6.84-6.84a1.21 1.21 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M14 19h4"/><path d="M17 22v-2"/><path d="M2 10h2"/><path d="M9 14H5"/><path d="M22 17h-2"/><path d="M14 9v-4"/></svg>
+                            <svg id="loader-icon" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span id="generate-btn-text">Generate Code</span>
+                        </button>
+                    </div>
+                </main>
             </div>
 
-            <!-- Controls: Generate Button -->
-            <div class="flex items-center">
-                <button id="generate-btn" class="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed">
-                    <svg id="generate-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-sparkles"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L11.8 9.2a1.21 1.21 0 0 0 0 1.72l5.8 5.8a1.21 1.21 0 0 0 1.72 0l6.84-6.84a1.21 1.21 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M14 19h4"/><path d="M17 22v-2"/><path d="M2 10h2"/><path d="M9 14H5"/><path d="M22 17h-2"/><path d="M14 9v-4"/></svg>
-                    <svg id="loader-icon" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span id="generate-btn-text">Generate Code</span>
-                </button>
-            </div>
-        </main>
+            <!-- Resizer 1 -->
+            <div id="resizer-1" class="resizer hidden lg:block"></div>
 
-        <!-- Output Section -->
-        <section id="output-container" class="mt-8 bg-gray-900 rounded-2xl shadow-lg border border-gray-700 hidden">
-            <!-- Output Header with Controls -->
-            <div class="flex justify-between items-center p-4 border-b border-gray-700">
-                <h3 class="text-lg font-semibold text-gray-300">Generated Code</h3>
-                <div class="flex gap-2">
-                    <button id="copy-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 text-sm font-medium rounded-md hover:bg-gray-600 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                        <span id="copy-btn-text">Copy</span>
-                    </button>
-                    <button id="clear-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-red-800/50 text-red-300 text-sm font-medium rounded-md hover:bg-red-800/80 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                        <span>Clear</span>
-                    </button>
-                </div>
+            <!-- Output Column -->
+            <div id="output-column" class="flex flex-col lg:flex-[1_1_40%] min-w-0">
+                 <section id="output-container" class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col hidden">
+                    <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
+                        <h3 class="text-lg font-semibold text-gray-300">Generated Code</h3>
+                        <div class="flex gap-2">
+                            <button id="copy-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 text-sm font-medium rounded-md hover:bg-gray-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span id="copy-btn-text">Copy</span></button>
+                            <button id="clear-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-red-800/50 text-red-300 text-sm font-medium rounded-md hover:bg-red-800/80 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg><span>Clear</span></button>
+                        </div>
+                    </div>
+                    <div class="p-4 flex-1 overflow-auto">
+                        <pre><code id="code-output" class="hljs"></code></pre>
+                    </div>
+                </section>
             </div>
-            <!-- Code Display Area -->
-            <div class="p-4">
-                <pre><code id="code-output" class="hljs"></code></pre>
+
+            <!-- Resizer 2 -->
+            <div id="resizer-2" class="resizer hidden lg:block"></div>
+
+            <!-- Preview Column -->
+            <div id="preview-column" class="flex flex-col lg:flex-[1_1_30%] min-w-0">
+                <section id="preview-container" class="h-full flex flex-col hidden">
+                     <div class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col">
+                        <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
+                            <h3 class="text-lg font-semibold text-gray-300">Live Preview</h3>
+                        </div>
+                        <div class="flex-1 min-h-0">
+                           <iframe id="preview-frame" title="Code Preview"></iframe>
+                        </div>
+                     </div>
+                </section>
             </div>
-        </section>
-
-        <!-- Preview Section -->
-        <section id="preview-container" class="mt-8 hidden">
-             <div class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700">
-                <div class="flex justify-between items-center p-4 border-b border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-300">Live Preview</h3>
-                </div>
-                <iframe id="preview-frame" title="Code Preview"></iframe>
-             </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="text-center mt-8 text-gray-500 text-sm">
-            <p>Powered by <a href="https://puter.com" target="_blank" class="font-semibold text-gray-400 hover:text-blue-400 transition-colors">Puter.js</a>.</p>
-        </footer>
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- State Variable ---
-            // Stores the last generated raw code to use for copying and previewing
             let lastGeneratedCode = '';
 
             // --- DOM Element Selection ---
@@ -153,10 +162,6 @@
             clearBtn.addEventListener('click', handleClearAll);
 
             // --- Core Functions ---
-
-            /**
-             * Handles the code generation process. It now tells the AI to infer the language.
-             */
             async function handleGenerateCode() {
                 const prompt = promptInput.value.trim();
                 if (!prompt) {
@@ -171,7 +176,7 @@
                         IMPORTANT: Only output the raw code. Do not include any explanations, comments, or markdown formatting like \`\`\`language ... \`\`\`.
                     `;
                     const response = await puter.ai.chat(fullPrompt, { model: 'gpt-4o' });
-                    lastGeneratedCode = String(response).trim(); // Store the raw code
+                    lastGeneratedCode = String(response).trim();
                     displayCode(lastGeneratedCode);
                 } catch (error) {
                     console.error("Error generating code:", error);
@@ -182,56 +187,35 @@
                 }
             }
 
-            /**
-             * Displays the code, applies syntax highlighting, and automatically shows a preview if applicable.
-             * @param {string} codeString - The raw code string from the AI.
-             */
             function displayCode(codeString) {
-                // Use highlight.js to auto-detect language and get highlighted HTML
                 const result = hljs.highlightAuto(codeString);
                 codeOutput.innerHTML = result.value;
-
                 outputContainer.classList.remove('hidden');
                 
-                // Check if the detected language is previewable
                 const detectedLanguage = result.language;
                 const isPreviewable = detectedLanguage === 'xml' || detectedLanguage === 'html' || codeString.toLowerCase().includes('<!doctype html>');
                 
                 if (isPreviewable) {
-                    handlePreview(); // Show preview automatically
+                    handlePreview();
                 } else {
-                    previewContainer.classList.add('hidden'); // Hide for non-web code
+                    previewContainer.classList.add('hidden');
                 }
             }
             
-            /**
-             * Renders the generated code in an iframe.
-             */
             function handlePreview() {
-                previewFrame.srcdoc = lastGeneratedCode; // Use the stored raw code
+                previewFrame.srcdoc = lastGeneratedCode;
                 previewContainer.classList.remove('hidden');
             }
 
-            /**
-             * Copies the raw generated code to the clipboard.
-             */
             function handleCopyCode() {
-                const tempTextArea = document.createElement('textarea');
-                tempTextArea.value = lastGeneratedCode; // Use the stored raw code
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempTextArea);
-
-                copyBtnText.textContent = 'Copied!';
-                setTimeout(() => {
-                    copyBtnText.textContent = 'Copy';
-                }, 2000);
+                navigator.clipboard.writeText(lastGeneratedCode).then(() => {
+                    copyBtnText.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtnText.textContent = 'Copy';
+                    }, 2000);
+                });
             }
 
-            /**
-             * Clears the input, output, and preview sections.
-             */
             function handleClearAll() {
                 promptInput.value = '';
                 lastGeneratedCode = '';
@@ -241,10 +225,6 @@
                 previewFrame.srcdoc = '';
             }
 
-            /**
-             * Toggles the UI to show a loading state.
-             * @param {boolean} isLoading - Whether to show the loading state.
-             */
             function setLoadingState(isLoading) {
                 generateBtn.disabled = isLoading;
                 if (isLoading) {
@@ -257,6 +237,38 @@
                     generateBtnText.textContent = 'Generate Code';
                 }
             }
+
+            // --- Resizing Logic ---
+            const resizer1 = document.getElementById('resizer-1');
+            const resizer2 = document.getElementById('resizer-2');
+            const inputColumn = document.getElementById('input-column');
+            const outputColumn = document.getElementById('output-column');
+
+            function initResizer(resizer, leftPanel, rightPanel) {
+                let x = 0;
+                let leftWidth = 0;
+
+                const onMouseMove = (e) => {
+                    const dx = e.clientX - x;
+                    const newLeftWidth = (leftWidth + dx) * 100 / resizer.parentElement.getBoundingClientRect().width;
+                    leftPanel.style.flexBasis = `${newLeftWidth}%`;
+                };
+
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+
+                resizer.addEventListener('mousedown', (e) => {
+                    x = e.clientX;
+                    leftWidth = leftPanel.getBoundingClientRect().width;
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+            }
+
+            initResizer(resizer1, inputColumn, outputColumn);
+            initResizer(resizer2, outputColumn, document.getElementById('preview-column'));
         });
     </script>
 </body>
