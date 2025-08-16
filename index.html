@@ -95,10 +95,6 @@
             <div class="flex justify-between items-center p-4 border-b border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-300">Generated Code</h3>
                 <div class="flex gap-2">
-                    <button id="preview-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-green-800/50 text-green-300 text-sm font-medium rounded-md hover:bg-green-800/80 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        <span>Preview</span>
-                    </button>
                     <button id="copy-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 text-sm font-medium rounded-md hover:bg-gray-600 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                         <span id="copy-btn-text">Copy</span>
@@ -133,6 +129,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- State Variable ---
+            // Stores the last generated raw code to use for copying and previewing
+            let lastGeneratedCode = '';
+
             // --- DOM Element Selection ---
             const promptInput = document.getElementById('prompt-input');
             const generateBtn = document.getElementById('generate-btn');
@@ -144,7 +144,6 @@
             const copyBtn = document.getElementById('copy-btn');
             const copyBtnText = document.getElementById('copy-btn-text');
             const clearBtn = document.getElementById('clear-btn');
-            const previewBtn = document.getElementById('preview-btn');
             const previewContainer = document.getElementById('preview-container');
             const previewFrame = document.getElementById('preview-frame');
 
@@ -152,7 +151,6 @@
             generateBtn.addEventListener('click', handleGenerateCode);
             copyBtn.addEventListener('click', handleCopyCode);
             clearBtn.addEventListener('click', handleClearAll);
-            previewBtn.addEventListener('click', handlePreview);
 
             // --- Core Functions ---
 
@@ -173,7 +171,8 @@
                         IMPORTANT: Only output the raw code. Do not include any explanations, comments, or markdown formatting like \`\`\`language ... \`\`\`.
                     `;
                     const response = await puter.ai.chat(fullPrompt, { model: 'gpt-4o' });
-                    displayCode(response);
+                    lastGeneratedCode = String(response).trim(); // Store the raw code
+                    displayCode(lastGeneratedCode);
                 } catch (error) {
                     console.error("Error generating code:", error);
                     codeOutput.textContent = `// An error occurred while generating the code.\n// Please check the console for details.`;
@@ -184,47 +183,41 @@
             }
 
             /**
-             * Displays the code and uses highlight.js to auto-detect the language.
-             * Also determines if the "Preview" button should be shown.
-             * @param {string} code - The code string from the AI.
+             * Displays the code, applies syntax highlighting, and automatically shows a preview if applicable.
+             * @param {string} codeString - The raw code string from the AI.
              */
-            function displayCode(code) {
-                const codeString = String(code).trim();
-                codeOutput.textContent = codeString;
-                
-                // Reset class to allow auto-detection
-                codeOutput.className = 'hljs';
-                hljs.highlightElement(codeOutput);
+            function displayCode(codeString) {
+                // Use highlight.js to auto-detect language and get highlighted HTML
+                const result = hljs.highlightAuto(codeString);
+                codeOutput.innerHTML = result.value;
 
                 outputContainer.classList.remove('hidden');
                 
-                // Check if the detected language is HTML to show the preview button
-                const detectedLanguage = codeOutput.result.language;
-                if (detectedLanguage === 'xml' || detectedLanguage === 'html' || codeString.toLowerCase().includes('<!doctype html>')) {
-                    previewBtn.classList.remove('hidden');
+                // Check if the detected language is previewable
+                const detectedLanguage = result.language;
+                const isPreviewable = detectedLanguage === 'xml' || detectedLanguage === 'html' || codeString.toLowerCase().includes('<!doctype html>');
+                
+                if (isPreviewable) {
+                    handlePreview(); // Show preview automatically
                 } else {
-                    previewBtn.classList.add('hidden');
+                    previewContainer.classList.add('hidden'); // Hide for non-web code
                 }
-                // Hide preview container when new code is generated
-                previewContainer.classList.add('hidden');
             }
             
             /**
-             * Renders the generated HTML/CSS/JS code in an iframe.
+             * Renders the generated code in an iframe.
              */
             function handlePreview() {
-                const codeToPreview = codeOutput.textContent;
-                previewFrame.srcdoc = codeToPreview;
+                previewFrame.srcdoc = lastGeneratedCode; // Use the stored raw code
                 previewContainer.classList.remove('hidden');
             }
 
             /**
-             * Copies the generated code to the clipboard.
+             * Copies the raw generated code to the clipboard.
              */
             function handleCopyCode() {
-                const codeToCopy = codeOutput.textContent;
                 const tempTextArea = document.createElement('textarea');
-                tempTextArea.value = codeToCopy;
+                tempTextArea.value = lastGeneratedCode; // Use the stored raw code
                 document.body.appendChild(tempTextArea);
                 tempTextArea.select();
                 document.execCommand('copy');
@@ -241,9 +234,9 @@
              */
             function handleClearAll() {
                 promptInput.value = '';
+                lastGeneratedCode = '';
                 outputContainer.classList.add('hidden');
-                codeOutput.textContent = '';
-                codeOutput.className = 'hljs';
+                codeOutput.innerHTML = '';
                 previewContainer.classList.add('hidden');
                 previewFrame.srcdoc = '';
             }
