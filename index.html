@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codenix - AI Code Generator</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter for UI, Fira Code for code blocks -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- Puter.js for AI functionality -->
+    <script src="https://js.puter.com/v2/"></script>
+
+    <style>
+        /* Custom styles to apply the fonts and theme */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+        }
+        /* Style for the code output block */
+        #code-output {
+            font-family: 'Fira Code', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        /* Style for the preview iframe */
+        #preview-frame {
+            width: 100%;
+            height: 400px;
+            border: none;
+            border-radius: 0 0 1rem 1rem; /* rounded-b-2xl */
+            background-color: white;
+        }
+        /* Custom scrollbar for a more integrated look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* bg-gray-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* bg-gray-500 */
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        <!-- Header Section -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                Codenix
+            </h1>
+            <p class="text-gray-400 mt-2">AI-powered code generation, right in your browser.</p>
+        </header>
+
+        <!-- Main Content: Input and Controls -->
+        <main class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700">
+            <!-- Prompt Input Textarea -->
+            <div class="mb-4">
+                <label for="prompt-input" class="block mb-2 text-sm font-medium text-gray-300">Your Prompt</label>
+                <textarea id="prompt-input" rows="4" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" placeholder="e.g., Create a Python function to reverse a string... or... Design a simple HTML login form"></textarea>
+            </div>
+
+            <!-- Controls: Generate Button -->
+            <div class="flex items-center">
+                <button id="generate-btn" class="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed">
+                    <svg id="generate-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-sparkles"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L11.8 9.2a1.21 1.21 0 0 0 0 1.72l5.8 5.8a1.21 1.21 0 0 0 1.72 0l6.84-6.84a1.21 1.21 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M14 19h4"/><path d="M17 22v-2"/><path d="M2 10h2"/><path d="M9 14H5"/><path d="M22 17h-2"/><path d="M14 9v-4"/></svg>
+                    <svg id="loader-icon" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="generate-btn-text">Generate Code</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Output Section -->
+        <section id="output-container" class="mt-8 bg-gray-900 rounded-2xl shadow-lg border border-gray-700 hidden">
+            <!-- Output Header with Controls -->
+            <div class="flex justify-between items-center p-4 border-b border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-300">Generated Code</h3>
+                <div class="flex gap-2">
+                    <button id="preview-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-green-800/50 text-green-300 text-sm font-medium rounded-md hover:bg-green-800/80 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <span>Preview</span>
+                    </button>
+                    <button id="copy-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 text-sm font-medium rounded-md hover:bg-gray-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        <span id="copy-btn-text">Copy</span>
+                    </button>
+                    <button id="clear-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-red-800/50 text-red-300 text-sm font-medium rounded-md hover:bg-red-800/80 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        <span>Clear</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Code Display Area -->
+            <div class="p-4">
+                <pre><code id="code-output" class="hljs"></code></pre>
+            </div>
+        </section>
+
+        <!-- Preview Section -->
+        <section id="preview-container" class="mt-8 hidden">
+             <div class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700">
+                <div class="flex justify-between items-center p-4 border-b border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-300">Live Preview</h3>
+                </div>
+                <iframe id="preview-frame" title="Code Preview"></iframe>
+             </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>Powered by <a href="https://puter.com" target="_blank" class="font-semibold text-gray-400 hover:text-blue-400 transition-colors">Puter.js</a>.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element Selection ---
+            const promptInput = document.getElementById('prompt-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const generateBtnText = document.getElementById('generate-btn-text');
+            const generateIcon = document.getElementById('generate-icon');
+            const loaderIcon = document.getElementById('loader-icon');
+            const outputContainer = document.getElementById('output-container');
+            const codeOutput = document.getElementById('code-output');
+            const copyBtn = document.getElementById('copy-btn');
+            const copyBtnText = document.getElementById('copy-btn-text');
+            const clearBtn = document.getElementById('clear-btn');
+            const previewBtn = document.getElementById('preview-btn');
+            const previewContainer = document.getElementById('preview-container');
+            const previewFrame = document.getElementById('preview-frame');
+
+            // --- Event Listeners ---
+            generateBtn.addEventListener('click', handleGenerateCode);
+            copyBtn.addEventListener('click', handleCopyCode);
+            clearBtn.addEventListener('click', handleClearAll);
+            previewBtn.addEventListener('click', handlePreview);
+
+            // --- Core Functions ---
+
+            /**
+             * Handles the code generation process. It now tells the AI to infer the language.
+             */
+            async function handleGenerateCode() {
+                const prompt = promptInput.value.trim();
+                if (!prompt) {
+                    alert("Please enter a prompt to generate code.");
+                    return;
+                }
+                setLoadingState(true);
+                try {
+                    const fullPrompt = `
+                        You are an expert programmer. Generate a complete, runnable code snippet based on the following request: "${prompt}".
+                        Infer the programming language from the request.
+                        IMPORTANT: Only output the raw code. Do not include any explanations, comments, or markdown formatting like \`\`\`language ... \`\`\`.
+                    `;
+                    const response = await puter.ai.chat(fullPrompt, { model: 'gpt-4o' });
+                    displayCode(response);
+                } catch (error) {
+                    console.error("Error generating code:", error);
+                    codeOutput.textContent = `// An error occurred while generating the code.\n// Please check the console for details.`;
+                    outputContainer.classList.remove('hidden');
+                } finally {
+                    setLoadingState(false);
+                }
+            }
+
+            /**
+             * Displays the code and uses highlight.js to auto-detect the language.
+             * Also determines if the "Preview" button should be shown.
+             * @param {string} code - The code string from the AI.
+             */
+            function displayCode(code) {
+                const codeString = String(code).trim();
+                codeOutput.textContent = codeString;
+                
+                // Reset class to allow auto-detection
+                codeOutput.className = 'hljs';
+                hljs.highlightElement(codeOutput);
+
+                outputContainer.classList.remove('hidden');
+                
+                // Check if the detected language is HTML to show the preview button
+                const detectedLanguage = codeOutput.result.language;
+                if (detectedLanguage === 'xml' || detectedLanguage === 'html' || codeString.toLowerCase().includes('<!doctype html>')) {
+                    previewBtn.classList.remove('hidden');
+                } else {
+                    previewBtn.classList.add('hidden');
+                }
+                // Hide preview container when new code is generated
+                previewContainer.classList.add('hidden');
+            }
+            
+            /**
+             * Renders the generated HTML/CSS/JS code in an iframe.
+             */
+            function handlePreview() {
+                const codeToPreview = codeOutput.textContent;
+                previewFrame.srcdoc = codeToPreview;
+                previewContainer.classList.remove('hidden');
+            }
+
+            /**
+             * Copies the generated code to the clipboard.
+             */
+            function handleCopyCode() {
+                const codeToCopy = codeOutput.textContent;
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = codeToCopy;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+
+                copyBtnText.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtnText.textContent = 'Copy';
+                }, 2000);
+            }
+
+            /**
+             * Clears the input, output, and preview sections.
+             */
+            function handleClearAll() {
+                promptInput.value = '';
+                outputContainer.classList.add('hidden');
+                codeOutput.textContent = '';
+                codeOutput.className = 'hljs';
+                previewContainer.classList.add('hidden');
+                previewFrame.srcdoc = '';
+            }
+
+            /**
+             * Toggles the UI to show a loading state.
+             * @param {boolean} isLoading - Whether to show the loading state.
+             */
+            function setLoadingState(isLoading) {
+                generateBtn.disabled = isLoading;
+                if (isLoading) {
+                    generateIcon.classList.add('hidden');
+                    loaderIcon.classList.remove('hidden');
+                    generateBtnText.textContent = 'Generating...';
+                } else {
+                    generateIcon.classList.remove('hidden');
+                    loaderIcon.classList.add('hidden');
+                    generateBtnText.textContent = 'Generate Code';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
