@@ -27,7 +27,7 @@
             background-color: #111827; /* bg-gray-900 */
             overflow-x: hidden;
         }
-        /* Style for the code output blocks */
+        /* Style for the code output block */
         #code-output {
             font-family: 'Fira Code', monospace;
             white-space: pre;
@@ -63,23 +63,9 @@
             width: 6px;
             border-radius: 3px;
             transition: background-color 0.2s;
-            z-index: 10;
         }
         .resizer:hover {
             background-color: #4f46e5; /* hover:bg-indigo-600 */
-        }
-        /* Style for the custom message box */
-        #message-box {
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-        }
-        /* Fullscreen Preview Modal Styles */
-        #fullscreen-modal {
-            transition: opacity 0.3s ease-in-out;
-        }
-        #fullscreen-modal iframe {
-            width: 100%;
-            height: 100%;
-            border-radius: 0.75rem; /* rounded-xl */
         }
     </style>
 </head>
@@ -100,17 +86,11 @@
             <!-- Input Column -->
             <div id="input-column" class="flex flex-col lg:flex-[0_0_30%] min-w-0">
                 <main class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col">
-                    <div class="mb-4 flex-1 flex flex-col">
+                    <div class="mb-4">
                         <label for="prompt-input" class="block mb-2 text-sm font-medium text-gray-300">Your Prompt</label>
-                        <textarea id="prompt-input" rows="8" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 flex-1 resize-none" placeholder="e.g., Create a Python function to reverse a string..."></textarea>
+                        <textarea id="prompt-input" rows="8" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 flex-1 resize-none" placeholder="e.g., Create a Python function to reverse a string... or... Design a simple HTML login form"></textarea>
                     </div>
-                     <div class="mb-4">
-                        <label for="model-select" class="block mb-2 text-sm font-medium text-gray-300">Select AI Model</label>
-                        <select id="model-select" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <!-- Options will be populated by JS -->
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center">
                         <button id="generate-btn" class="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed">
                             <svg id="generate-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-sparkles"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L11.8 9.2a1.21 1.21 0 0 0 0 1.72l5.8 5.8a1.21 1.21 0 0 0 1.72 0l6.84-6.84a1.21 1.21 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M14 19h4"/><path d="M17 22v-2"/><path d="M2 10h2"/><path d="M9 14H5"/><path d="M22 17h-2"/><path d="M14 9v-4"/></svg>
                             <svg id="loader-icon" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -125,7 +105,7 @@
 
             <!-- Output Column -->
             <div id="output-column" class="flex flex-col lg:flex-[1_1_40%] min-w-0">
-                <section id="output-container" class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700 h-full flex-col hidden">
+                 <section id="output-container" class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col hidden">
                     <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
                         <h3 class="text-lg font-semibold text-gray-300">Generated Code</h3>
                         <div class="flex gap-2">
@@ -145,52 +125,25 @@
             <!-- Preview Column -->
             <div id="preview-column" class="flex flex-col lg:flex-[1_1_30%] min-w-0">
                 <section id="preview-container" class="h-full flex flex-col hidden">
-                       <div class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col">
-                            <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
-                                <h3 class="text-lg font-semibold text-gray-300">Live Preview</h3>
-                                <button id="refresh-btn" title="Refresh Preview" class="p-2 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                                </button>
-                            </div>
-                            <div id="preview-panel" class="flex-1 min-h-0 cursor-pointer" title="Double-click to expand">
-                               <iframe id="preview-frame" title="Code Preview" class="pointer-events-none"></iframe>
-                            </div>
-                       </div>
+                     <div class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col">
+                        <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
+                            <h3 class="text-lg font-semibold text-gray-300">Live Preview</h3>
+                        </div>
+                        <div class="flex-1 min-h-0">
+                           <iframe id="preview-frame" title="Code Preview"></iframe>
+                        </div>
+                     </div>
                 </section>
             </div>
         </div>
     </div>
 
-    <!-- Custom Message Box -->
-    <div id="message-box" class="fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg hidden opacity-0 translate-x-12">
-        Message goes here.
-    </div>
-
-    <!-- Fullscreen Preview Modal -->
-    <div id="fullscreen-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-8 hidden opacity-0">
-        <div id="fullscreen-content" class="w-full h-full bg-gray-900 border border-gray-700 rounded-xl shadow-2xl">
-            <!-- Iframe will be injected here -->
-        </div>
-        <button id="exit-fullscreen-btn" class="absolute top-4 right-4 text-white bg-gray-800/50 p-2 rounded-full hover:bg-gray-700 transition-colors" title="Exit Fullscreen">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-    </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Model Configuration ---
-            const MODELS = [
-                { id: 'gpt-4o', name: 'Codenix Model' },
-                { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet' },
-                { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
-                { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano' },
-            ];
-            
             let lastGeneratedCode = '';
 
             // --- DOM Element Selection ---
             const promptInput = document.getElementById('prompt-input');
-            const modelSelect = document.getElementById('model-select');
             const generateBtn = document.getElementById('generate-btn');
             const generateBtnText = document.getElementById('generate-btn-text');
             const generateIcon = document.getElementById('generate-icon');
@@ -201,77 +154,34 @@
             const copyBtnText = document.getElementById('copy-btn-text');
             const clearBtn = document.getElementById('clear-btn');
             const previewContainer = document.getElementById('preview-container');
-            const previewPanel = document.getElementById('preview-panel');
             const previewFrame = document.getElementById('preview-frame');
-            const refreshBtn = document.getElementById('refresh-btn');
-            const messageBox = document.getElementById('message-box');
-            const fullscreenModal = document.getElementById('fullscreen-modal');
-            const fullscreenContent = document.getElementById('fullscreen-content');
-            const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
 
-            // --- Initial Setup ---
-            function initializeApp() {
-                // Populate model dropdown
-                MODELS.forEach(model => {
-                    const option = document.createElement('option');
-                    option.value = model.id;
-                    option.textContent = model.name;
-                    modelSelect.appendChild(option);
-                });
-
-                // Add Event Listeners
-                generateBtn.addEventListener('click', handleGenerateCode);
-                copyBtn.addEventListener('click', handleCopyCode);
-                clearBtn.addEventListener('click', handleClearAll);
-                refreshBtn.addEventListener('click', () => handlePreview(lastGeneratedCode));
-                previewPanel.addEventListener('dblclick', openFullscreenPreview);
-                exitFullscreenBtn.addEventListener('click', closeFullscreenPreview);
-            }
-            
-            // --- UI Helper Functions ---
-            function showMessage(message, isError = true) {
-                messageBox.textContent = message;
-                messageBox.classList.remove('hidden', 'bg-red-500', 'bg-green-500', 'opacity-0', 'translate-x-12');
-                messageBox.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
-                
-                setTimeout(() => {
-                    messageBox.classList.remove('opacity-0', 'translate-x-12');
-                }, 10);
-
-                setTimeout(() => {
-                    messageBox.classList.add('opacity-0', 'translate-x-12');
-                    setTimeout(() => messageBox.classList.add('hidden'), 300);
-                }, 3000);
-            }
+            // --- Event Listeners ---
+            generateBtn.addEventListener('click', handleGenerateCode);
+            copyBtn.addEventListener('click', handleCopyCode);
+            clearBtn.addEventListener('click', handleClearAll);
 
             // --- Core Functions ---
             async function handleGenerateCode() {
                 const prompt = promptInput.value.trim();
-                const selectedModelId = modelSelect.value;
-                const selectedModel = MODELS.find(m => m.id === selectedModelId);
-
                 if (!prompt) {
-                    showMessage("Please enter a prompt.");
+                    alert("Please enter a prompt to generate code.");
                     return;
                 }
-                
                 setLoadingState(true);
-
                 try {
                     const fullPrompt = `
-                        You are an expert ${selectedModel.name} programmer. Generate a complete, runnable code snippet based on the following request: "${prompt}".
+                        You are an expert programmer. Generate a complete, runnable code snippet based on the following request: "${prompt}".
                         Infer the programming language from the request.
                         IMPORTANT: Only output the raw code. Do not include any explanations, comments, or markdown formatting like \`\`\`language ... \`\`\`.
                     `;
-
-                    const response = await puter.ai.chat(fullPrompt, { model: selectedModelId });
+                    const response = await puter.ai.chat(fullPrompt, { model: 'gpt-4o' });
                     lastGeneratedCode = String(response).trim();
                     displayCode(lastGeneratedCode);
-
                 } catch (error) {
-                    console.error(`Error with model ${selectedModel.name}:`, error);
-                    const errorMessage = `// ${error.message || `An error occurred with ${selectedModel.name}`}.\n// Please check the console for details.`;
-                    displayCode(errorMessage);
+                    console.error("Error generating code:", error);
+                    codeOutput.textContent = `// An error occurred while generating the code.\n// Please check the console for details.`;
+                    outputContainer.classList.remove('hidden');
                 } finally {
                     setLoadingState(false);
                 }
@@ -286,37 +196,24 @@
                 const isPreviewable = detectedLanguage === 'xml' || detectedLanguage === 'html' || codeString.toLowerCase().includes('<!doctype html>');
                 
                 if (isPreviewable) {
-                    handlePreview(codeString);
+                    handlePreview();
                 } else {
                     previewContainer.classList.add('hidden');
                 }
             }
-
-            function handlePreview(code) {
-                if (code === undefined) return;
-                previewFrame.srcdoc = code;
+            
+            function handlePreview() {
+                previewFrame.srcdoc = lastGeneratedCode;
                 previewContainer.classList.remove('hidden');
             }
 
             function handleCopyCode() {
-                if (!lastGeneratedCode) return;
-                const textArea = document.createElement('textarea');
-                textArea.value = lastGeneratedCode;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
+                navigator.clipboard.writeText(lastGeneratedCode).then(() => {
                     copyBtnText.textContent = 'Copied!';
-                    showMessage('Code copied to clipboard!', false);
-                } catch (err) {
-                    copyBtnText.textContent = 'Failed!';
-                    showMessage('Failed to copy code.');
-                    console.error('Fallback: Oops, unable to copy', err);
-                }
-                document.body.removeChild(textArea);
-                setTimeout(() => {
-                    copyBtnText.textContent = 'Copy';
-                }, 2000);
+                    setTimeout(() => {
+                        copyBtnText.textContent = 'Copy';
+                    }, 2000);
+                });
             }
 
             function handleClearAll() {
@@ -341,33 +238,11 @@
                 }
             }
 
-            // --- Fullscreen Preview Logic ---
-            function openFullscreenPreview() {
-                if (!lastGeneratedCode || previewContainer.classList.contains('hidden')) return;
-                
-                fullscreenContent.innerHTML = ''; // Clear previous content
-                const iframe = document.createElement('iframe');
-                iframe.srcdoc = lastGeneratedCode;
-                fullscreenContent.appendChild(iframe);
-
-                fullscreenModal.classList.remove('hidden');
-                setTimeout(() => fullscreenModal.classList.remove('opacity-0'), 10);
-            }
-
-            function closeFullscreenPreview() {
-                fullscreenModal.classList.add('opacity-0');
-                setTimeout(() => {
-                    fullscreenModal.classList.add('hidden');
-                    fullscreenContent.innerHTML = ''; // Clean up iframe
-                }, 300);
-            }
-
             // --- Resizing Logic ---
             const resizer1 = document.getElementById('resizer-1');
             const resizer2 = document.getElementById('resizer-2');
             const inputColumn = document.getElementById('input-column');
             const outputColumn = document.getElementById('output-column');
-            const previewColumn = document.getElementById('preview-column');
 
             function initResizer(resizer, leftPanel, rightPanel) {
                 let x = 0;
@@ -385,7 +260,6 @@
                 };
 
                 resizer.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
                     x = e.clientX;
                     leftWidth = leftPanel.getBoundingClientRect().width;
                     document.addEventListener('mousemove', onMouseMove);
@@ -394,10 +268,7 @@
             }
 
             initResizer(resizer1, inputColumn, outputColumn);
-            initResizer(resizer2, outputColumn, previewColumn);
-
-            // --- Start the app ---
-            initializeApp();
+            initResizer(resizer2, outputColumn, document.getElementById('preview-column'));
         });
     </script>
 </body>
