@@ -64,8 +64,22 @@
 </head>
 <body class="bg-gray-900 text-gray-200 flex flex-col h-screen">
 
+    <!-- API Key Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-gray-900 bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md m-4">
+            <h2 class="text-2xl font-bold text-white mb-4">API Key Required</h2>
+            <p class="text-gray-400 mb-6">Please enter your Promptly API Token to start chatting. The application will not work without a valid key.</p>
+            <div>
+                <label for="api-key-input" class="block text-sm font-medium text-gray-300 mb-2">PROMPTLY_TOKEN:</label>
+                <input type="password" id="api-key-input" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Enter your API key here">
+                <p id="key-error-message" class="text-red-400 text-sm mt-2 hidden">Please enter a valid API key.</p>
+            </div>
+            <button id="save-key-btn" class="mt-6 w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500">Save Key & Start Chat</button>
+        </div>
+    </div>
+
     <!-- Header Section -->
-    <header class="text-center p-4 border-b border-gray-700/50 bg-gray-900/80 backdrop-blur-sm">
+    <header class="text-center p-4 border-b border-gray-700/50 bg-gray-900/80 backdrop-blur-sm z-10">
         <div class="inline-flex items-center space-x-3">
             <svg class="w-8 h-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
@@ -78,178 +92,4 @@
     <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
         <!-- AI Welcome Message -->
         <div class="message ai-message flex">
-            <div class="bg-gray-700 rounded-lg p-3 max-w-lg">
-                <p>Hello! How can I help you today? Ask me to code something, explain a concept, or anything else!</p>
-            </div>
-        </div>
-        <!-- Chat messages will be appended here -->
-    </main>
-
-    <!-- Input Form Area -->
-    <footer class="p-4 bg-gray-900 border-t border-gray-700/50">
-        <form id="chat-form" class="max-w-3xl mx-auto flex items-center space-x-2">
-            <input type="text" id="chat-input" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow duration-200" placeholder="Type your message here...">
-            <button type="submit" id="submit-btn" class="bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-colors duration-200 disabled:bg-indigo-800 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                    <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                </svg>
-            </button>
-        </form>
-    </footer>
-
-    <script>
-        // DOM Element References
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
-        const chatContainer = document.getElementById('chat-container');
-        const submitBtn = document.getElementById('submit-btn');
-
-        // API Configuration
-        const API_URL = 'https://trypromptly.com/api/apps/efc8ca21-f341-4d09-be5b-e39f608b3186/run';
-        
-        // --- SECURITY WARNING ---
-        // Exposing API keys on the client-side is a major security risk.
-        // In a real-world application, this API call should be made from a backend server.
-        const PROMPTLY_TOKEN = 'a7e7478b707f6289f2eeb9a05cd990545f1c2531';
-
-        // Event listener for the form submission
-        chatForm.addEventListener('submit', handleSendMessage);
-
-        /**
-         * Handles sending a message, making the API call, and displaying the response.
-         * @param {Event} e - The form submission event.
-         */
-        async function handleSendMessage(e) {
-            e.preventDefault(); // Prevent the default form submission (page reload)
-            
-            const userMessage = chatInput.value.trim();
-            if (!userMessage) return;
-
-            // --- 1. Display user's message and clear input ---
-            addMessageToChat('user', userMessage);
-            chatInput.value = '';
-            setFormState(true); // Disable form while waiting for response
-
-            // --- 2. Show a "typing" indicator ---
-            const typingIndicator = showTypingIndicator();
-
-            // --- 3. Prepare and make the API call ---
-            const payload = {
-                input: { task: userMessage },
-                stream: false,
-            };
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': 'Token ' + PROMPTLY_TOKEN,
-            };
-
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify(payload),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => null);
-                    const errorMessage = errorData?.error?.message || `HTTP error! Status: ${response.status}`;
-                    throw new Error(errorMessage);
-                }
-
-                const data = await response.json();
-
-                // --- 4. Process the response and display the AI's message ---
-                if (data && data.output && data.output.answer) {
-                    addMessageToChat('ai', data.output.answer);
-                } else {
-                    console.log('Unexpected API response structure:', data);
-                    addMessageToChat('ai', 'Sorry, I received an unexpected response. Please check the console for details.');
-                }
-            } catch (error) {
-                console.error('Error fetching from API:', error);
-                addMessageToChat('ai', `An error occurred: ${error.message}`);
-            } finally {
-                // --- 5. Clean up UI ---
-                typingIndicator.remove(); // Remove the "typing" indicator
-                setFormState(false); // Re-enable the form
-            }
-        }
-
-        /**
-         * Adds a new message bubble to the chat container.
-         * @param {'user' | 'ai'} sender - The sender of the message.
-         * @param {string} text - The message content.
-         */
-        function addMessageToChat(sender, text) {
-            const messageWrapper = document.createElement('div');
-            messageWrapper.className = `message ${sender}-message flex`;
-            
-            const messageBubble = document.createElement('div');
-            messageBubble.className = 'rounded-lg p-3 max-w-lg';
-
-            if (sender === 'user') {
-                messageWrapper.classList.add('justify-end');
-                messageBubble.classList.add('bg-indigo-600', 'text-white');
-                messageBubble.textContent = text;
-            } else {
-                messageBubble.classList.add('bg-gray-700');
-                // Simple check to format code blocks a bit better
-                if (text.includes('```')) {
-                    // Using innerHTML to render code blocks correctly.
-                    // This is generally safe here as we trust the API output, but in a real app
-                    // with user-generated content, this would need sanitization to prevent XSS.
-                    const formattedText = text.replace(/```(\w+)?\n([\s\S]+?)```/g, 
-                        '<pre class="bg-gray-800 rounded-md p-2 mt-2 overflow-x-auto"><code class="language-$1">$2</code></pre>');
-                    messageBubble.innerHTML = formattedText;
-                } else {
-                    messageBubble.textContent = text;
-                }
-            }
-            
-            messageWrapper.appendChild(messageBubble);
-            chatContainer.appendChild(messageWrapper);
-            
-            // Scroll to the latest message
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        /**
-         * Creates and displays a typing indicator for the AI.
-         * @returns {HTMLElement} The typing indicator element.
-         */
-        function showTypingIndicator() {
-            const indicatorWrapper = document.createElement('div');
-            indicatorWrapper.id = 'typing-indicator';
-            indicatorWrapper.className = 'message ai-message flex';
-            
-            const indicatorBubble = document.createElement('div');
-            indicatorBubble.className = 'bg-gray-700 rounded-lg p-4 max-w-lg';
-            
-            const dots = document.createElement('div');
-            dots.className = 'dot-flashing';
-            
-            indicatorBubble.appendChild(dots);
-            indicatorWrapper.appendChild(indicatorBubble);
-            chatContainer.appendChild(indicatorWrapper);
-            
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            return indicatorWrapper;
-        }
-
-        /**
-         * Disables or enables the chat input form.
-         * @param {boolean} isDisabled - True to disable, false to enable.
-         */
-        function setFormState(isDisabled) {
-            chatInput.disabled = isDisabled;
-            submitBtn.disabled = isDisabled;
-            if(isDisabled) {
-                chatInput.placeholder = "AI is thinking...";
-            } else {
-                chatInput.placeholder = "Type your message here...";
-                chatInput.focus(); // Set focus back to the input field
-            }
-        }
-    </script>
-</body>
-</html>
+            <div class="bg-gray-700 rounded-lg 
