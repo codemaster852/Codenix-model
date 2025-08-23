@@ -3,402 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codenix - AI Code Generator</title>
-    
+    <title>Codenix AI Chat</title>
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Inter for UI, Fira Code for code blocks -->
+    <!-- Google Fonts for a clean, modern look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- highlight.js for syntax highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    
-    <!-- Puter.js for AI functionality -->
-    <script src="https://js.puter.com/v2/"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles to apply the fonts and theme */
+        /* Custom styles for the app */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #111827; /* bg-gray-900 */
-            overflow-x: hidden;
         }
-        /* Style for the code output blocks */
-        #code-output {
+        /* Using Fira Code for code blocks within the chat for better readability */
+        .ai-message pre code {
             font-family: 'Fira Code', monospace;
-            white-space: pre;
-            overflow-x: auto;
         }
-        /* Style for the preview iframe */
-        #preview-frame {
-            width: 100%;
-            height: 100%; /* Fill parent */
-            border: none;
-            background-color: white;
+        /* Simple spinner animation for the typing indicator */
+        .dot-flashing {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #9ca3af;
+            color: #9ca3af;
+            animation: dotFlashing 1s infinite linear alternate;
+            animation-delay: .5s;
         }
-        /* Custom scrollbar for a more integrated look */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        .dot-flashing::before, .dot-flashing::after {
+            content: '';
+            display: inline-block;
+            position: absolute;
+            top: 0;
         }
-        ::-webkit-scrollbar-track {
-            background: #1f2937; /* bg-gray-800 */
+        .dot-flashing::before {
+            left: -15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #9ca3af;
+            color: #9ca3af;
+            animation: dotFlashing 1s infinite alternate;
+            animation-delay: 0s;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #4b5563; /* bg-gray-600 */
-            border-radius: 4px;
+        .dot-flashing::after {
+            left: 15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #9ca3af;
+            color: #9ca3af;
+            animation: dotFlashing 1s infinite alternate;
+            animation-delay: 1s;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; /* bg-gray-500 */
-        }
-        /* Resizer handle styles */
-        .resizer {
-            background-color: #374151; /* bg-gray-700 */
-            cursor: col-resize;
-            flex-shrink: 0;
-            width: 6px;
-            border-radius: 3px;
-            transition: background-color 0.2s;
-            z-index: 10;
-        }
-        .resizer:hover {
-            background-color: #4f46e5; /* hover:bg-indigo-600 */
-        }
-        /* Style for the custom message box */
-        #message-box {
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-        }
-        /* Fullscreen Preview Modal Styles */
-        #fullscreen-modal {
-            transition: opacity 0.3s ease-in-out;
-        }
-        #fullscreen-modal iframe {
-            width: 100%;
-            height: 100%;
-            border-radius: 0.75rem; /* rounded-xl */
+        @keyframes dotFlashing {
+            0% { background-color: #9ca3af; }
+            50%, 100% { background-color: #4b5563; }
         }
     </style>
 </head>
-<body class="text-gray-200">
+<body class="bg-gray-900 text-gray-200 flex flex-col h-screen">
 
-    <div class="container mx-auto p-4 sm:p-6 md:p-8 flex flex-col h-screen">
-        <!-- Header Section -->
-        <header class="text-center mb-4 flex-shrink-0">
-            <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                Codenix
-            </h1>
-            <p class="text-gray-400 mt-2">AI-powered code generation, right in your browser.</p>
-        </header>
+    <!-- Header Section -->
+    <header class="text-center p-4 border-b border-gray-700/50 bg-gray-900/80 backdrop-blur-sm">
+        <div class="inline-flex items-center space-x-3">
+            <svg class="w-8 h-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            <h1 class="text-2xl font-bold text-white">Codenix AI Chat</h1>
+        </div>
+    </header>
 
-        <!-- Main Layout Container -->
-        <div id="main-layout" class="w-full flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
-            
-            <!-- Input Column -->
-            <div id="input-column" class="flex flex-col lg:flex-[0_0_30%] min-w-0">
-                <main class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col">
-                    <div class="mb-4 flex-1 flex flex-col">
-                        <label for="prompt-input" class="block mb-2 text-sm font-medium text-gray-300">Your Prompt</label>
-                        <textarea id="prompt-input" rows="8" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 flex-1 resize-none" placeholder="e.g., Create a Python function to reverse a string..."></textarea>
-                    </div>
-                     <div class="mb-4">
-                        <label for="model-select" class="block mb-2 text-sm font-medium text-gray-300">Select AI Model</label>
-                        <select id="model-select" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <!-- Options will be populated by JS -->
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button id="generate-btn" class="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-all duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed">
-                            <svg id="generate-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-sparkles"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L11.8 9.2a1.21 1.21 0 0 0 0 1.72l5.8 5.8a1.21 1.21 0 0 0 1.72 0l6.84-6.84a1.21 1.21 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M14 19h4"/><path d="M17 22v-2"/><path d="M2 10h2"/><path d="M9 14H5"/><path d="M22 17h-2"/><path d="M14 9v-4"/></svg>
-                            <svg id="loader-icon" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span id="generate-btn-text">Generate Code</span>
-                        </button>
-                    </div>
-                </main>
-            </div>
-
-            <!-- Resizer 1 -->
-            <div id="resizer-1" class="resizer hidden lg:block"></div>
-
-            <!-- Output Column -->
-            <div id="output-column" class="flex flex-col lg:flex-[1_1_40%] min-w-0">
-                <section id="output-container" class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700 h-full flex-col hidden">
-                    <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
-                        <h3 class="text-lg font-semibold text-gray-300">Generated Code</h3>
-                        <div class="flex gap-2">
-                            <button id="copy-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 text-sm font-medium rounded-md hover:bg-gray-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span id="copy-btn-text">Copy</span></button>
-                            <button id="clear-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-red-800/50 text-red-300 text-sm font-medium rounded-md hover:bg-red-800/80 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg><span>Clear</span></button>
-                        </div>
-                    </div>
-                    <div class="p-4 flex-1 overflow-auto">
-                        <pre><code id="code-output" class="hljs"></code></pre>
-                    </div>
-                </section>
-            </div>
-
-            <!-- Resizer 2 -->
-            <div id="resizer-2" class="resizer hidden lg:block"></div>
-
-            <!-- Preview Column -->
-            <div id="preview-column" class="flex flex-col lg:flex-[1_1_30%] min-w-0">
-                <section id="preview-container" class="h-full flex flex-col hidden">
-                       <div class="bg-gray-900 rounded-2xl shadow-lg border border-gray-700 h-full flex flex-col">
-                            <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
-                                <h3 class="text-lg font-semibold text-gray-300">Live Preview</h3>
-                                <button id="refresh-btn" title="Refresh Preview" class="p-2 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                                </button>
-                            </div>
-                            <div id="preview-panel" class="flex-1 min-h-0 cursor-pointer" title="Double-click to expand">
-                               <iframe id="preview-frame" title="Code Preview" class="pointer-events-none"></iframe>
-                            </div>
-                       </div>
-                </section>
+    <!-- Chat Container -->
+    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+        <!-- AI Welcome Message -->
+        <div class="message ai-message flex">
+            <div class="bg-gray-700 rounded-lg p-3 max-w-lg">
+                <p>Hello! How can I help you today? Ask me to code something, explain a concept, or anything else!</p>
             </div>
         </div>
-    </div>
+        <!-- Chat messages will be appended here -->
+    </main>
 
-    <!-- Custom Message Box -->
-    <div id="message-box" class="fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg hidden opacity-0 translate-x-12">
-        Message goes here.
-    </div>
-
-    <!-- Fullscreen Preview Modal -->
-    <div id="fullscreen-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-8 hidden opacity-0">
-        <div id="fullscreen-content" class="w-full h-full bg-gray-900 border border-gray-700 rounded-xl shadow-2xl">
-            <!-- Iframe will be injected here -->
-        </div>
-        <button id="exit-fullscreen-btn" class="absolute top-4 right-4 text-white bg-gray-800/50 p-2 rounded-full hover:bg-gray-700 transition-colors" title="Exit Fullscreen">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-    </div>
+    <!-- Input Form Area -->
+    <footer class="p-4 bg-gray-900 border-t border-gray-700/50">
+        <form id="chat-form" class="max-w-3xl mx-auto flex items-center space-x-2">
+            <input type="text" id="chat-input" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow duration-200" placeholder="Type your message here...">
+            <button type="submit" id="submit-btn" class="bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-colors duration-200 disabled:bg-indigo-800 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                    <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                </svg>
+            </button>
+        </form>
+    </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Model Configuration ---
-            const MODELS = [
-                { id: 'gpt-4o', name: 'Codenix Model' },
-                { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet' },
-                { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
-                { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano' },
-            ];
+        // DOM Element References
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatContainer = document.getElementById('chat-container');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // API Configuration
+        const API_URL = 'https://trypromptly.com/api/apps/efc8ca21-f341-4d09-be5b-e39f608b3186/run';
+        
+        // --- SECURITY WARNING ---
+        // Exposing API keys on the client-side is a major security risk.
+        // In a real-world application, this API call should be made from a backend server.
+        const PROMPTLY_TOKEN = 'a7e7478b707f6289f2eeb9a05cd990545f1c2531';
+
+        // Event listener for the form submission
+        chatForm.addEventListener('submit', handleSendMessage);
+
+        /**
+         * Handles sending a message, making the API call, and displaying the response.
+         * @param {Event} e - The form submission event.
+         */
+        async function handleSendMessage(e) {
+            e.preventDefault(); // Prevent the default form submission (page reload)
             
-            let lastGeneratedCode = '';
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
 
-            // --- DOM Element Selection ---
-            const promptInput = document.getElementById('prompt-input');
-            const modelSelect = document.getElementById('model-select');
-            const generateBtn = document.getElementById('generate-btn');
-            const generateBtnText = document.getElementById('generate-btn-text');
-            const generateIcon = document.getElementById('generate-icon');
-            const loaderIcon = document.getElementById('loader-icon');
-            const outputContainer = document.getElementById('output-container');
-            const codeOutput = document.getElementById('code-output');
-            const copyBtn = document.getElementById('copy-btn');
-            const copyBtnText = document.getElementById('copy-btn-text');
-            const clearBtn = document.getElementById('clear-btn');
-            const previewContainer = document.getElementById('preview-container');
-            const previewPanel = document.getElementById('preview-panel');
-            const previewFrame = document.getElementById('preview-frame');
-            const refreshBtn = document.getElementById('refresh-btn');
-            const messageBox = document.getElementById('message-box');
-            const fullscreenModal = document.getElementById('fullscreen-modal');
-            const fullscreenContent = document.getElementById('fullscreen-content');
-            const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
+            // --- 1. Display user's message and clear input ---
+            addMessageToChat('user', userMessage);
+            chatInput.value = '';
+            setFormState(true); // Disable form while waiting for response
 
-            // --- Initial Setup ---
-            function initializeApp() {
-                // Populate model dropdown
-                MODELS.forEach(model => {
-                    const option = document.createElement('option');
-                    option.value = model.id;
-                    option.textContent = model.name;
-                    modelSelect.appendChild(option);
+            // --- 2. Show a "typing" indicator ---
+            const typingIndicator = showTypingIndicator();
+
+            // --- 3. Prepare and make the API call ---
+            const payload = {
+                input: { task: userMessage },
+                stream: false,
+            };
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + PROMPTLY_TOKEN,
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload),
                 });
 
-                // Add Event Listeners
-                generateBtn.addEventListener('click', handleGenerateCode);
-                copyBtn.addEventListener('click', handleCopyCode);
-                clearBtn.addEventListener('click', handleClearAll);
-                refreshBtn.addEventListener('click', () => handlePreview(lastGeneratedCode));
-                previewPanel.addEventListener('dblclick', openFullscreenPreview);
-                exitFullscreenBtn.addEventListener('click', closeFullscreenPreview);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => null);
+                    const errorMessage = errorData?.error?.message || `HTTP error! Status: ${response.status}`;
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+
+                // --- 4. Process the response and display the AI's message ---
+                if (data && data.output && data.output.answer) {
+                    addMessageToChat('ai', data.output.answer);
+                } else {
+                    console.log('Unexpected API response structure:', data);
+                    addMessageToChat('ai', 'Sorry, I received an unexpected response. Please check the console for details.');
+                }
+            } catch (error) {
+                console.error('Error fetching from API:', error);
+                addMessageToChat('ai', `An error occurred: ${error.message}`);
+            } finally {
+                // --- 5. Clean up UI ---
+                typingIndicator.remove(); // Remove the "typing" indicator
+                setFormState(false); // Re-enable the form
+            }
+        }
+
+        /**
+         * Adds a new message bubble to the chat container.
+         * @param {'user' | 'ai'} sender - The sender of the message.
+         * @param {string} text - The message content.
+         */
+        function addMessageToChat(sender, text) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `message ${sender}-message flex`;
+            
+            const messageBubble = document.createElement('div');
+            messageBubble.className = 'rounded-lg p-3 max-w-lg';
+
+            if (sender === 'user') {
+                messageWrapper.classList.add('justify-end');
+                messageBubble.classList.add('bg-indigo-600', 'text-white');
+                messageBubble.textContent = text;
+            } else {
+                messageBubble.classList.add('bg-gray-700');
+                // Simple check to format code blocks a bit better
+                if (text.includes('```')) {
+                    // Using innerHTML to render code blocks correctly.
+                    // This is generally safe here as we trust the API output, but in a real app
+                    // with user-generated content, this would need sanitization to prevent XSS.
+                    const formattedText = text.replace(/```(\w+)?\n([\s\S]+?)```/g, 
+                        '<pre class="bg-gray-800 rounded-md p-2 mt-2 overflow-x-auto"><code class="language-$1">$2</code></pre>');
+                    messageBubble.innerHTML = formattedText;
+                } else {
+                    messageBubble.textContent = text;
+                }
             }
             
-            // --- UI Helper Functions ---
-            function showMessage(message, isError = true) {
-                messageBox.textContent = message;
-                messageBox.classList.remove('hidden', 'bg-red-500', 'bg-green-500', 'opacity-0', 'translate-x-12');
-                messageBox.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
-                
-                setTimeout(() => {
-                    messageBox.classList.remove('opacity-0', 'translate-x-12');
-                }, 10);
+            messageWrapper.appendChild(messageBubble);
+            chatContainer.appendChild(messageWrapper);
+            
+            // Scroll to the latest message
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
 
-                setTimeout(() => {
-                    messageBox.classList.add('opacity-0', 'translate-x-12');
-                    setTimeout(() => messageBox.classList.add('hidden'), 300);
-                }, 3000);
+        /**
+         * Creates and displays a typing indicator for the AI.
+         * @returns {HTMLElement} The typing indicator element.
+         */
+        function showTypingIndicator() {
+            const indicatorWrapper = document.createElement('div');
+            indicatorWrapper.id = 'typing-indicator';
+            indicatorWrapper.className = 'message ai-message flex';
+            
+            const indicatorBubble = document.createElement('div');
+            indicatorBubble.className = 'bg-gray-700 rounded-lg p-4 max-w-lg';
+            
+            const dots = document.createElement('div');
+            dots.className = 'dot-flashing';
+            
+            indicatorBubble.appendChild(dots);
+            indicatorWrapper.appendChild(indicatorBubble);
+            chatContainer.appendChild(indicatorWrapper);
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return indicatorWrapper;
+        }
+
+        /**
+         * Disables or enables the chat input form.
+         * @param {boolean} isDisabled - True to disable, false to enable.
+         */
+        function setFormState(isDisabled) {
+            chatInput.disabled = isDisabled;
+            submitBtn.disabled = isDisabled;
+            if(isDisabled) {
+                chatInput.placeholder = "AI is thinking...";
+            } else {
+                chatInput.placeholder = "Type your message here...";
+                chatInput.focus(); // Set focus back to the input field
             }
-
-            // --- Core Functions ---
-            async function handleGenerateCode() {
-                const prompt = promptInput.value.trim();
-                const selectedModelId = modelSelect.value;
-                const selectedModel = MODELS.find(m => m.id === selectedModelId);
-
-                if (!prompt) {
-                    showMessage("Please enter a prompt.");
-                    return;
-                }
-                
-                setLoadingState(true);
-
-                try {
-                    const fullPrompt = `
-                        You are an expert ${selectedModel.name} programmer. Generate a complete, runnable code snippet based on the following request: "${prompt}".
-                        Infer the programming language from the request.
-                        IMPORTANT: Only output the raw code. Do not include any explanations, comments, or markdown formatting like \`\`\`language ... \`\`\`.
-                    `;
-
-                    const response = await puter.ai.chat(fullPrompt, { model: selectedModelId });
-                    lastGeneratedCode = String(response).trim();
-                    displayCode(lastGeneratedCode);
-
-                } catch (error) {
-                    console.error(`Error with model ${selectedModel.name}:`, error);
-                    const errorMessage = `// ${error.message || `An error occurred with ${selectedModel.name}`}.\n// Please check the console for details.`;
-                    displayCode(errorMessage);
-                } finally {
-                    setLoadingState(false);
-                }
-            }
-
-            function displayCode(codeString) {
-                const result = hljs.highlightAuto(codeString);
-                codeOutput.innerHTML = result.value;
-                outputContainer.classList.remove('hidden');
-                
-                const detectedLanguage = result.language;
-                const isPreviewable = detectedLanguage === 'xml' || detectedLanguage === 'html' || codeString.toLowerCase().includes('<!doctype html>');
-                
-                if (isPreviewable) {
-                    handlePreview(codeString);
-                } else {
-                    previewContainer.classList.add('hidden');
-                }
-            }
-
-            function handlePreview(code) {
-                if (code === undefined) return;
-                previewFrame.srcdoc = code;
-                previewContainer.classList.remove('hidden');
-            }
-
-            function handleCopyCode() {
-                if (!lastGeneratedCode) return;
-                const textArea = document.createElement('textarea');
-                textArea.value = lastGeneratedCode;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    copyBtnText.textContent = 'Copied!';
-                    showMessage('Code copied to clipboard!', false);
-                } catch (err) {
-                    copyBtnText.textContent = 'Failed!';
-                    showMessage('Failed to copy code.');
-                    console.error('Fallback: Oops, unable to copy', err);
-                }
-                document.body.removeChild(textArea);
-                setTimeout(() => {
-                    copyBtnText.textContent = 'Copy';
-                }, 2000);
-            }
-
-            function handleClearAll() {
-                promptInput.value = '';
-                lastGeneratedCode = '';
-                outputContainer.classList.add('hidden');
-                codeOutput.innerHTML = '';
-                previewContainer.classList.add('hidden');
-                previewFrame.srcdoc = '';
-            }
-
-            function setLoadingState(isLoading) {
-                generateBtn.disabled = isLoading;
-                if (isLoading) {
-                    generateIcon.classList.add('hidden');
-                    loaderIcon.classList.remove('hidden');
-                    generateBtnText.textContent = 'Generating...';
-                } else {
-                    generateIcon.classList.remove('hidden');
-                    loaderIcon.classList.add('hidden');
-                    generateBtnText.textContent = 'Generate Code';
-                }
-            }
-
-            // --- Fullscreen Preview Logic ---
-            function openFullscreenPreview() {
-                if (!lastGeneratedCode || previewContainer.classList.contains('hidden')) return;
-                
-                fullscreenContent.innerHTML = ''; // Clear previous content
-                const iframe = document.createElement('iframe');
-                iframe.srcdoc = lastGeneratedCode;
-                fullscreenContent.appendChild(iframe);
-
-                fullscreenModal.classList.remove('hidden');
-                setTimeout(() => fullscreenModal.classList.remove('opacity-0'), 10);
-            }
-
-            function closeFullscreenPreview() {
-                fullscreenModal.classList.add('opacity-0');
-                setTimeout(() => {
-                    fullscreenModal.classList.add('hidden');
-                    fullscreenContent.innerHTML = ''; // Clean up iframe
-                }, 300);
-            }
-
-            // --- Resizing Logic ---
-            const resizer1 = document.getElementById('resizer-1');
-            const resizer2 = document.getElementById('resizer-2');
-            const inputColumn = document.getElementById('input-column');
-            const outputColumn = document.getElementById('output-column');
-            const previewColumn = document.getElementById('preview-column');
-
-            function initResizer(resizer, leftPanel, rightPanel) {
-                let x = 0;
-                let leftWidth = 0;
-
-                const onMouseMove = (e) => {
-                    const dx = e.clientX - x;
-                    const newLeftWidth = (leftWidth + dx) * 100 / resizer.parentElement.getBoundingClientRect().width;
-                    leftPanel.style.flexBasis = `${newLeftWidth}%`;
-                };
-
-                const onMouseUp = () => {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                };
-
-                resizer.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    x = e.clientX;
-                    leftWidth = leftPanel.getBoundingClientRect().width;
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                });
-            }
-
-            initResizer(resizer1, inputColumn, outputColumn);
-            initResizer(resizer2, outputColumn, previewColumn);
-
-            // --- Start the app ---
-            initializeApp();
-        });
+        }
     </script>
 </body>
 </html>
